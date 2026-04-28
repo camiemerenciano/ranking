@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking Afiliados — NMTC</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --terra: #C1440E; --laranja: #E8956D; --fundo: #0F0F0F; --card: #161616;
+    --borda: #222; --texto: #F5F0EB; --muted: #666;
+    --ouro: #F4C842; --prata: #A8B8C8; --bronze: #CD7F32;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--fundo); color: var(--texto); font-family: 'Syne', sans-serif; min-height: 100vh; padding: 2rem 1rem 4rem; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; }
+  .wrap { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
+  .header { margin-bottom: 2.5rem; }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+  .logo-icon { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--terra); background: rgba(193,68,14,0.1); border: 0.5px solid rgba(193,68,14,0.3); padding: 4px 10px; border-radius: 4px; }
+  .logo-name { font-size: 13px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .header h1 { font-size: clamp(28px, 6vw, 44px); font-weight: 800; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
+  .header h1 span { color: var(--terra); }
+  .header-sub { font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .meta-card { background: var(--card); border: 0.5px solid var(--borda); border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .meta-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .meta-value { font-size: 28px; font-weight: 800; color: var(--texto); }
+  .meta-progress-wrap { flex: 1; min-width: 160px; }
+  .meta-progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; }
+  .meta-bar { height: 6px; background: #222; border-radius: 99px; overflow: hidden; }
+  .meta-fill { height: 100%; background: linear-gradient(90deg, var(--terra), var(--laranja)); border-radius: 99px; transition: width 0.8s ease; }
+  .prazo-badge { background: rgba(193,68,14,0.1); border: 0.5px solid rgba(193,68,14,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--laranja); font-family: 'Space Mono', monospace; white-space: nowrap; }
+  .section-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; font-family: 'Space Mono', monospace; }
+  /* Filtro */
+  .filtro-data { margin-bottom: 1.25rem; }
+  .filtro-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--card); border: 0.5px solid var(--borda); border-radius: 10px; padding: 10px 14px; color: var(--texto); font-family: 'Space Mono', monospace; font-size: 12px; cursor: pointer; transition: border-color 0.2s; text-align: left; }
+  .filtro-btn:hover { border-color: #444; }
+  .filtro-btn.ativo { border-color: var(--terra); }
+  .filtro-btn.open .filtro-chevron { transform: rotate(180deg); }
+  .filtro-left { display: flex; align-items: center; gap: 8px; }
+  .filtro-chevron { color: var(--muted); font-size: 10px; transition: transform 0.2s; display: inline-block; }
+  .cal-wrap { display: none; background: #181818; border: 0.5px solid #2a2a2a; border-radius: 16px; padding: 1.25rem; margin-top: 6px; }
+  .cal-wrap.open { display: block; }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .cal-mes-ano { font-size: 14px; font-weight: 700; }
+  .cal-nav { background: none; border: 0.5px solid #2a2a2a; color: var(--texto); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; line-height: 1; }
+  .cal-nav:hover { border-color: #555; }
+  .cal-semana { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 2px; }
+  .cal-ds { text-align: center; font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; padding: 4px 0; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-family: 'Space Mono', monospace; border-radius: 6px; cursor: pointer; transition: background 0.1s; position: relative; user-select: none; }
+  .cal-day:hover:not(.outside) { background: #2a2a2a; }
+  .cal-day.outside { color: #282828; pointer-events: none; }
+  .cal-day.in-range { background: rgba(193,68,14,0.15); border-radius: 0; }
+  .cal-day.sel-start, .cal-day.sel-end { background: var(--terra) !important; color: #fff !important; z-index: 1; }
+  .cal-day.sel-start { border-radius: 6px 0 0 6px; }
+  .cal-day.sel-end { border-radius: 0 6px 6px 0; }
+  .cal-day.sel-single { border-radius: 6px !important; }
+  .cal-day.tem-venda::after { content: ''; width: 4px; height: 4px; background: var(--laranja); border-radius: 50%; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); }
+  .cal-day.sel-start.tem-venda::after, .cal-day.sel-end.tem-venda::after { background: rgba(255,255,255,0.5); }
+  .cal-hint { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; text-align: center; margin-top: 0.75rem; min-height: 16px; }
+  .cal-acoes { display: flex; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 0.5px solid #222; }
+  .cal-btn-limpar { flex: 1; background: none; border: 0.5px solid #333; color: var(--muted); border-radius: 8px; padding: 8px; font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .cal-btn-limpar:hover { border-color: #555; color: var(--texto); }
+  /* Cards */
+  .afiliado-card { background: var(--card); border: 0.5px solid var(--borda); border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; display: grid; grid-template-columns: 48px 1fr auto; gap: 1rem; align-items: center; transition: border-color 0.2s, transform 0.2s; position: relative; overflow: hidden; }
+  .afiliado-card:hover { border-color: #333; transform: translateY(-1px); }
+  .afiliado-card.top1 { border-color: rgba(244,200,66,0.3); background: linear-gradient(135deg, #161616, #1a1600); }
+  .afiliado-card.top2 { border-color: rgba(168,184,200,0.2); }
+  .afiliado-card.top3 { border-color: rgba(205,127,50,0.2); }
+  .afiliado-card.top1::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--ouro), transparent); }
+  .pos { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0; }
+  .pos-1 { background: rgba(244,200,66,0.15); color: var(--ouro); }
+  .pos-2 { background: rgba(168,184,200,0.1); color: var(--prata); }
+  .pos-3 { background: rgba(205,127,50,0.1); color: var(--bronze); }
+  .pos-n { background: #1a1a1a; color: var(--muted); font-size: 16px; }
+  .af-info { min-width: 0; }
+  .af-name { font-size: 16px; font-weight: 700; color: var(--texto); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .af-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: 'Space Mono', monospace; font-weight: 700; }
+  .tag-vendas { background: rgba(193,68,14,0.15); border: 0.5px solid rgba(193,68,14,0.3); color: var(--laranja); }
+  .af-comissao { text-align: right; flex-shrink: 0; }
+  .comissao-valor { font-size: 22px; font-weight: 800; color: var(--texto); font-family: 'Space Mono', monospace; white-space: nowrap; }
+  .comissao-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .comissao-status { font-size: 10px; margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .status-pendente { color: var(--laranja); }
+  .status-pago { color: #4ECDA0; }
+  /* Totais */
+  .totais { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 2rem; margin-bottom: 2rem; }
+  .total-card { background: var(--card); border: 0.5px solid var(--borda); border-radius: 12px; padding: 1rem; text-align: center; }
+  .total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .total-valor { font-size: 22px; font-weight: 800; color: var(--texto); font-family: 'Space Mono', monospace; }
+  .total-valor.green { color: #4ECDA0; }
+  .total-valor.orange { color: var(--laranja); }
+  .aviso-pagamento { background: rgba(193,68,14,0.06); border: 0.5px solid rgba(193,68,14,0.2); border-radius: 12px; padding: 1rem 1.25rem; font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; line-height: 1.6; margin-bottom: 2rem; }
+  .aviso-pagamento strong { color: var(--laranja); }
+  /* Botão adicionar */
+  .btn-adicionar { background: var(--terra); color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 13px; font-family: 'Space Mono', monospace; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; white-space: nowrap; }
+  .btn-adicionar:hover { background: #a83a0c; transform: translateY(-1px); }
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #1a1a1a; border: 0.5px solid #333; border-radius: 20px; padding: 2rem; width: 100%; max-width: 400px; margin: 1rem; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 1.5rem; }
+  .modal h2 span { color: var(--terra); }
+  .modal-field { margin-bottom: 1rem; }
+  .modal-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; font-family: 'Space Mono', monospace; }
+  .modal select, .modal input[type=date] { width: 100%; background: #111; border: 0.5px solid #333; border-radius: 8px; color: var(--texto); font-family: 'Space Mono', monospace; font-size: 14px; padding: 10px 12px; outline: none; -webkit-appearance: none; appearance: none; }
+  .modal select:focus, .modal input:focus { border-color: var(--terra); }
+  .modal input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.3); cursor: pointer; }
+  /* Linhas de venda no modal */
+  .modal-vendas-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .modal-add-row { background: none; border: 0.5px solid rgba(193,68,14,0.4); color: var(--laranja); border-radius: 6px; padding: 4px 10px; font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; transition: border-color 0.15s; }
+  .modal-add-row:hover { border-color: var(--terra); }
+  .modal-venda-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .modal-venda-row input[type=date] { flex: 1; }
+  .modal-remove-row { background: none; border: 0.5px solid #333; color: var(--muted); border-radius: 6px; width: 34px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s; flex-shrink: 0; line-height: 1; }
+  .modal-remove-row:hover { border-color: var(--terra); color: var(--laranja); }
+  .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+  .btn-confirmar { flex: 1; background: var(--terra); color: #fff; border: none; border-radius: 8px; padding: 10px; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+  .btn-confirmar:hover { background: #a83a0c; }
+  .btn-cancelar { flex: 1; background: transparent; color: var(--muted); border: 0.5px solid #333; border-radius: 8px; padding: 10px; font-family: 'Space Mono', monospace; font-size: 13px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .btn-cancelar:hover { border-color: #555; color: var(--texto); }
+  .atualizado { text-align: center; font-size: 11px; color: #333; font-family: 'Space Mono', monospace; margin-top: 2rem; }
+  @media (max-width: 480px) {
+    .afiliado-card { grid-template-columns: 40px 1fr; }
+    .af-comissao { grid-column: 2; text-align: left; }
+    .totais { grid-template-columns: 1fr 1fr; }
+    .meta-card { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo-row">
+      <span class="logo-icon">&lt;/&gt;</span>
+      <span class="logo-name">Nunca Mais Trave em Código</span>
+    </div>
+    <h1>Ranking de<br><span>Afiliados</span></h1>
+    <p class="header-sub">Semana de 19 a 27 de abril de 2026</p>
+  </div>
+
+  <div class="meta-card">
+    <div>
+      <div class="meta-label">Meta da semana</div>
+      <div class="meta-value">20 vendas</div>
+    </div>
+    <div class="meta-progress-wrap">
+      <div class="meta-progress-label">
+        <span>Progresso</span>
+        <span id="progresso-texto">0 / 20</span>
+      </div>
+      <div class="meta-bar">
+        <div class="meta-fill" id="meta-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="prazo-badge">&#9201; Pag. em 2 dias úteis</div>
+  </div>
+
+  <!-- Filtro de data -->
+  <div class="filtro-data">
+    <button class="filtro-btn" id="filtro-btn" onclick="toggleCalendario()">
+      <span class="filtro-left"><span>&#128197;</span><span id="filtro-label">Semana inteira</span></span>
+      <span class="filtro-chevron">&#9660;</span>
+    </button>
+    <div class="cal-wrap" id="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calNavegar(-1)">&#8249;</button>
+        <span class="cal-mes-ano" id="cal-mes-ano"></span>
+        <button class="cal-nav" onclick="calNavegar(1)">&#8250;</button>
+      </div>
+      <div class="cal-semana">
+        <div class="cal-ds">Dom</div><div class="cal-ds">Seg</div><div class="cal-ds">Ter</div>
+        <div class="cal-ds">Qua</div><div class="cal-ds">Qui</div><div class="cal-ds">Sex</div>
+        <div class="cal-ds">Sáb</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-hint" id="cal-hint">Clique em um dia para iniciar o filtro</div>
+      <div class="cal-acoes">
+        <button class="cal-btn-limpar" onclick="limparFiltro()">Ver tudo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ranking -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div class="section-label">Classificação</div>
+    <button class="btn-adicionar" onclick="abrirModal()">+ Adicionar venda</button>
+  </div>
+
+  <div id="ranking-lista"></div>
+
+  <div class="totais">
+    <div class="total-card">
+      <div class="total-label">Total vendas</div>
+      <div class="total-valor orange" id="total-vendas">0</div>
+    </div>
+    <div class="total-card">
+      <div class="total-label">Receita gerada</div>
+      <div class="total-valor" id="total-receita">R$0</div>
+    </div>
+    <div class="total-card">
+      <div class="total-label">Comissões</div>
+      <div class="total-valor green" id="total-comissoes">R$0</div>
+    </div>
+  </div>
+
+  <div class="aviso-pagamento">
+    &#128176; <strong>Política de pagamento:</strong> as comissões são pagas em até <strong>2 dias úteis</strong> após o encerramento da semana (domingo). O pagamento é feito via Pix no valor total acumulado por afiliado.
+  </div>
+
+  <div class="atualizado" id="atualizado">Atualizado em 27/04/2026 às 18:34 — @bytechgirl</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>Adicionar <span>venda</span></h2>
+    <div class="modal-field">
+      <label class="modal-label">Afiliado</label>
+      <select id="modal-afiliado"></select>
+    </div>
+    <div class="modal-vendas-header">
+      <span class="modal-label" style="margin-bottom:0">Datas das vendas</span>
+      <button class="modal-add-row" onclick="adicionarLinhaVenda()">+ venda</button>
+    </div>
+    <div id="modal-vendas-lista"></div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-confirmar" onclick="confirmarVenda()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const META = 20;
+  const VALOR_VENDA = 10;
+  const COMISSAO_POR_VENDA = 3;
+
+  const afiliados = [
+    { nome: 'Camila Emerenciano',   vendas: [] },
+    { nome: 'Bianca Noberto',       vendas: [] },
+    { nome: 'Gabriel Marques',      vendas: [] },
+    { nome: 'Pedro Victor',         vendas: [] },
+    { nome: 'Caio Timóteo',         vendas: [] },
+    { nome: 'Eduarda Purificação',  vendas: [] },
+    { nome: 'Nanda',                vendas: [] },
+    { nome: 'Erika Naiane',         vendas: [] },
+  ];
+
+  let filtroInicio = null;
+  let filtroFim    = null;
+
+  function vendasFiltradas(af) {
+    if (!filtroInicio) return af.vendas.length;
+    return af.vendas.filter(d => d >= filtroInicio && d <= filtroFim).length;
+  }
+
+  const medalhas    = ['🥇','🥈','🥉'];
+  const posClasses  = ['pos-1','pos-2','pos-3'];
+  const cardClasses = ['top1','top2','top3'];
+
+  function renderRanking() {
+    const sorted = [...afiliados]
+      .map(af => ({ ...af, vf: vendasFiltradas(af) }))
+      .sort((a, b) => b.vf - a.vf);
+
+    document.getElementById('ranking-lista').innerHTML = sorted.map((af, i) => {
+      const comissao = af.vf * COMISSAO_POR_VENDA;
+      const label    = af.vf === 1 ? '1 venda' : af.vf + ' vendas';
+      const status   = af.vf > 0
+        ? '<div class="comissao-status status-pendente">&#9679; pendente</div>'
+        : '<div class="comissao-status" style="color:#444">&#9679; sem atividade</div>';
+      return '<div class="afiliado-card ' + (cardClasses[i]||'') + '">'
+        + '<div class="pos ' + (posClasses[i]||'pos-n') + '">' + (medalhas[i]||(i+1)) + '</div>'
+        + '<div class="af-info"><div class="af-name">' + af.nome + '</div>'
+        + '<div class="af-tags"><span class="tag tag-vendas">' + label + '</span></div></div>'
+        + '<div class="af-comissao"><div class="comissao-valor">R$' + comissao + '</div>'
+        + '<div class="comissao-label">comissão</div>' + status + '</div></div>';
+    }).join('');
+
+    const total   = sorted.reduce((s, a) => s + a.vf, 0);
+    const pct     = Math.min((total / META) * 100, 100);
+    document.getElementById('total-vendas').textContent    = total;
+    document.getElementById('total-receita').textContent   = 'R$' + (total * VALOR_VENDA);
+    document.getElementById('total-comissoes').textContent = 'R$' + (total * COMISSAO_POR_VENDA);
+    document.getElementById('progresso-texto').textContent = total + ' / ' + META;
+    document.getElementById('meta-fill').style.width       = pct + '%';
+  }
+
+  // --- Modal ---
+  function hoje() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function adicionarLinhaVenda(data) {
+    const lista = document.getElementById('modal-vendas-lista');
+    const row   = document.createElement('div');
+    row.className = 'modal-venda-row';
+    row.innerHTML = '<input type="date" class="modal-data-venda" value="' + (data || hoje()) + '">'
+      + '<button class="modal-remove-row" onclick="this.parentElement.remove()">&#215;</button>';
+    lista.appendChild(row);
+  }
+
+  function abrirModal() {
+    const sel = document.getElementById('modal-afiliado');
+    sel.innerHTML = afiliados.map((a, i) => '<option value="' + i + '">' + a.nome + '</option>').join('');
+    document.getElementById('modal-vendas-lista').innerHTML = '';
+    adicionarLinhaVenda();
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function fecharModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function confirmarVenda() {
+    const idx   = parseInt(document.getElementById('modal-afiliado').value);
+    const datas = [...document.querySelectorAll('.modal-data-venda')].map(i => i.value || hoje());
+    if (datas.length === 0) return;
+    datas.forEach(d => afiliados[idx].vendas.push(d));
+    fecharModal();
+    renderRanking();
+    renderCalGrid();
+    atualizarTimestamp();
+  }
+
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+
+  // --- Calendário ---
+  let calAberto    = false;
+  let calAno       = 2026;
+  let calMes       = 3;
+  let calStep      = 0;
+  let calTempStart = null;
+  let calHover     = null;
+
+  const mesesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function toggleCalendario() {
+    calAberto = !calAberto;
+    document.getElementById('filtro-btn').classList.toggle('open', calAberto);
+    document.getElementById('cal-wrap').classList.toggle('open', calAberto);
+    if (calAberto) renderCalGrid();
+  }
+
+  function calNavegar(dir) {
+    calMes += dir;
+    if (calMes < 0)  { calMes = 11; calAno--; }
+    if (calMes > 11) { calMes = 0;  calAno++; }
+    renderCalGrid();
+  }
+
+  function diasComVenda() {
+    const set = new Set();
+    afiliados.forEach(af => af.vendas.forEach(d => set.add(d)));
+    return set;
+  }
+
+  function fmtData(str) {
+    const p = str.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  function renderCalGrid() {
+    document.getElementById('cal-mes-ano').textContent = mesesNomes[calMes] + ' ' + calAno;
+    const primeiroDia = new Date(calAno, calMes, 1).getDay();
+    const ultimoDia   = new Date(calAno, calMes + 1, 0).getDate();
+    const vendasDias  = diasComVenda();
+
+    let rangeA = filtroInicio, rangeB = filtroFim;
+    if (calStep === 1 && calTempStart) {
+      rangeA = calTempStart;
+      rangeB = calHover || calTempStart;
+      if (rangeA > rangeB) { let t = rangeA; rangeA = rangeB; rangeB = t; }
+    }
+
+    let html = '';
+    for (let i = 0; i < primeiroDia; i++) html += '<div class="cal-day outside"></div>';
+    for (let d = 1; d <= ultimoDia; d++) {
+      const str  = calAno + '-' + String(calMes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const temV = vendasDias.has(str);
+      let cls    = 'cal-day' + (temV ? ' tem-venda' : '');
+      if (rangeA && rangeB) {
+        if (str === rangeA && str === rangeB) cls += ' sel-start sel-single';
+        else if (str === rangeA) cls += ' sel-start';
+        else if (str === rangeB) cls += ' sel-end';
+        else if (str > rangeA && str < rangeB) cls += ' in-range';
+      } else if (rangeA && str === rangeA) {
+        cls += ' sel-start sel-single';
+      }
+      html += '<div class="' + cls + '" data-date="' + str + '">' + d + '</div>';
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+
+    let hint = 'Clique em um dia para iniciar o filtro';
+    if (calStep === 1 && calTempStart) hint = 'Agora clique no dia final';
+    else if (filtroInicio && filtroFim)  hint = fmtData(filtroInicio) + ' → ' + fmtData(filtroFim);
+    else if (filtroInicio)               hint = fmtData(filtroInicio);
+    document.getElementById('cal-hint').textContent = hint;
+  }
+
+  function calClickDia(str) {
+    if (calStep === 0) {
+      calTempStart = str; calStep = 1; calHover = null; renderCalGrid();
+    } else {
+      let ini = calTempStart, fim = str;
+      if (ini > fim) { let t = ini; ini = fim; fim = t; }
+      filtroInicio = ini; filtroFim = fim;
+      calStep = 0; calTempStart = null; calHover = null;
+      atualizarFiltroLabel();
+      renderRanking();
+      renderCalGrid();
+      calAberto = false;
+      document.getElementById('filtro-btn').classList.remove('open');
+      document.getElementById('cal-wrap').classList.remove('open');
+    }
+  }
+
+  function atualizarClassesRange() {
+    if (calStep !== 1 || !calTempStart) return;
+    let rA = calTempStart, rB = calHover || calTempStart;
+    if (rA > rB) { let t = rA; rA = rB; rB = t; }
+    document.querySelectorAll('#cal-grid [data-date]').forEach(function(el) {
+      const d = el.dataset.date;
+      el.classList.remove('in-range', 'sel-start', 'sel-end', 'sel-single');
+      if (d === rA && d === rB) el.classList.add('sel-start', 'sel-single');
+      else if (d === rA)        el.classList.add('sel-start');
+      else if (d === rB)        el.classList.add('sel-end');
+      else if (d > rA && d < rB) el.classList.add('in-range');
+    });
+    const hint = document.getElementById('cal-hint');
+    if (hint) hint.textContent = 'Agora clique no dia final';
+  }
+
+  function calHoverDia(str) {
+    if (calStep !== 1) return;
+    calHover = str;
+    atualizarClassesRange();
+  }
+
+  document.getElementById('cal-grid').addEventListener('click', function(e) {
+    const day = e.target.closest('[data-date]');
+    if (day) calClickDia(day.dataset.date);
+  });
+
+  document.getElementById('cal-grid').addEventListener('mousemove', function(e) {
+    const day = e.target.closest('[data-date]');
+    if (day && day.dataset.date !== calHover) calHoverDia(day.dataset.date);
+  });
+
+  document.getElementById('cal-wrap').addEventListener('mouseleave', function() {
+    if (calStep === 1) { calHover = null; atualizarClassesRange(); }
+  });
+
+  function limparFiltro() {
+    filtroInicio = null; filtroFim = null; calStep = 0; calTempStart = null; calHover = null;
+    document.getElementById('filtro-label').textContent = 'Semana inteira';
+    document.getElementById('filtro-btn').classList.remove('ativo');
+    renderRanking(); renderCalGrid();
+    calAberto = false;
+    document.getElementById('filtro-btn').classList.remove('open');
+    document.getElementById('cal-wrap').classList.remove('open');
+  }
+
+  function atualizarFiltroLabel() {
+    const label = document.getElementById('filtro-label');
+    const btn   = document.getElementById('filtro-btn');
+    if (filtroInicio && filtroFim) {
+      label.textContent = filtroInicio === filtroFim ? fmtData(filtroInicio) : fmtData(filtroInicio) + ' → ' + fmtData(filtroFim);
+      btn.classList.add('ativo');
+    } else {
+      label.textContent = 'Semana inteira';
+      btn.classList.remove('ativo');
+    }
+  }
+
+  function atualizarTimestamp() {
+    const n = new Date();
+    document.getElementById('atualizado').textContent =
+      'Atualizado em ' + String(n.getDate()).padStart(2,'0') + '/' + String(n.getMonth()+1).padStart(2,'0') + '/' + n.getFullYear()
+      + ' às ' + String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0') + ' — @bytechgirl';
+  }
+
+  renderRanking();
+</script>
+</body>
+</html>
