@@ -395,7 +395,7 @@
       } else if (rangeA && str === rangeA) {
         cls += ' sel-start sel-single';
       }
-      html += '<div class="' + cls + '" onclick="calClickDia(\'' + str + '\')" onmouseenter="calHoverDia(\'' + str + '\')">' + d + '</div>';
+      html += '<div class="' + cls + '" data-date="' + str + '">' + d + '</div>';
     }
     document.getElementById('cal-grid').innerHTML = html;
 
@@ -426,6 +426,16 @@
   function calHoverDia(str) {
     if (calStep === 1) { calHover = str; renderCalGrid(); }
   }
+
+  document.getElementById('cal-grid').addEventListener('click', function(e) {
+    const day = e.target.closest('[data-date]');
+    if (day) calClickDia(day.dataset.date);
+  });
+
+  document.getElementById('cal-grid').addEventListener('mousemove', function(e) {
+    const day = e.target.closest('[data-date]');
+    if (day) calHoverDia(day.dataset.date);
+  });
 
   document.getElementById('cal-wrap').addEventListener('mouseleave', function() {
     if (calStep === 1) { calHover = null; renderCalGrid(); }
